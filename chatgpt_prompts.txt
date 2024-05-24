@@ -1,0 +1,1 @@
+Use the Python package 'mail-parser-reply' to process email messages from an inbox in order to provide a checklist of suppliers' replies to our weekly orders. This dashboard must include a list of active (checkbox) suppliers together with their last response and respective time and date.

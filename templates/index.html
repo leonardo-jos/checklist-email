@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Supplier Checklist</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        .inactive {
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Supplier Checklist</h1>
+    <a href="/">Home Dashboard</a> | <a href="/suppliers">Suppliers Info</a>
+    <br><br>
+    <input type="text" id="search" placeholder="Search suppliers...">
+    <button onclick="fetchEmails()">Fetch Emails</button>
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Address</th>
+                <th>Representative</th>
+                <th>Fiscal Number</th>
+                <th>Active</th>
+                <th>Order Sent</th>
+                <th>Order Received</th>
+                <th>Order Confirmed</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="supplier-list">
+            {% for supplier in suppliers %}
+            <tr class="{{ 'inactive' if not supplier.active }}">
+                <td>{{ supplier.name }}</td>
+                <td>{{ supplier.phone }}</td>
+                <td>{{ supplier.address }}</td>
+                <td>{{ supplier.representative }}</td>
+                <td>{{ supplier.fiscal_number }}</td>
+                <td><input type="checkbox" class="toggle-active" data-id="{{ supplier.id }}" {% if supplier.active %}checked{% endif %}></td>
+                <td><input type="checkbox" class="update-status" data-id="{{ supplier.id }}" data-field="order_sent" {% if supplier.order_sent %}checked{% endif %}></td>
+                <td><input type="checkbox" class="update-status" data-id="{{ supplier.id }}" data-field="order_received" {% if supplier.order_received %}checked{% endif %}></td>
+                <td><input type="checkbox" class="update-status" data-id="{{ supplier.id }}" data-field="order_confirmed" {% if supplier.order_confirmed %}checked{% endif %}></td>
+                <td>
+                    <button class="send-email" data-name="{{ supplier.name }}">Send Email</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            document.querySelectorAll(".toggle-active").forEach(button => {
+                button.addEventListener("click", function() {
+                    const supplierId = this.dataset.id;
+                    fetch(`/toggle_supplier/${supplierId}`, {
+                        method: "POST"
+                    }).then(() => location.reload());
+                });
+            });
+
+            document.querySelectorAll(".update-status").forEach(checkbox => {
+                checkbox.addEventListener("change", function() {
+                    const supplierId = this.dataset.id;
+                    const field = this.dataset.field;
+                    const data = {};
+                    data[field] = this.checked;
+                    fetch(`/update_supplier/${supplierId}`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(data)
+                    }).then(() => location.reload());
+                });
+            });
+
+            const searchInput = document.getElementById("search");
+            searchInput.addEventListener("input", function() {
+                const filter = searchInput.value.toLowerCase();
+                document.querySelectorAll("#supplier-list tr").forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(filter) ? "" : "none";
+                });
+            });
+
+            document.querySelectorAll(".send-email").forEach(button => {
+                button.addEventListener("click", function() {
+                    const supplierName = this.dataset.name;
+                    const email = prompt(`Enter the email address for ${supplierName}`);
+                    if (email) {
+                        const subject = encodeURIComponent(`Order for ${supplierName}`);
+                        // Add logic to send email
+                        alert(`Sending email to ${email} with subject "${subject}"`);
+                    }
+                });
+            });
+        });
+
+        function fetchEmails() {
+            fetch("/fetch_emails")
+                .then(response => response.text())
+                .then(() => location.reload());
+        }
+    </script>
+</body>
+</html>
